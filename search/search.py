@@ -136,19 +136,19 @@ def depth_first_search(problem):
     fringe = util.Stack() #places we still need to explore
     start_state = problem.get_start_state() #initial state
     start_node = SearchNode(None, (start_state, None, 0)) #create a initial state searchnode, parent is None, the start is start_state, action none and cost 0
-    fringe.push(start_node)
+    fringe.push(start_node) #Push the start node into the stack
     visited = set() #graph search, so we need to remember states we've already expanded
     while not fringe.is_empty():#while there are nodes to explore
-        node = fringe.pop()
-        state = node.state
+        node = fringe.pop() #Take next node
+        state = node.state #Take the state from the node
         if state in visited:
             continue #ignore node and go back to the beginning of the while loop
         visited.add(state) #if we haven't seen it add it
-        if problem.is_goal_state(state):
-            return node.get_path()#we return the path, not the state
-        for successor, action, cost in problem.get_successors(state):
-            successor_node = SearchNode(node,(successor, action, cost))
-            fringe.push(successor_node)
+        if problem.is_goal_state(state): #Check if the state is the goal state
+            return node.get_path()#we return the path, not the state, because we want a list of actions
+        for successor, action, cost in problem.get_successors(state): #where the pacman can legally move from the actual state
+            successor_node = SearchNode(node,(successor, action, cost)) #create a new searchnode
+            fringe.push(successor_node)#put the successor node into the stack to explore it later
     util.raise_not_defined()
 
 
