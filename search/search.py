@@ -159,7 +159,7 @@ def breadth_first_search(problem):
     fringe = util.Queue() #places we still need to explore
     start_state = problem.get_start_state() #initial state
     start_node = SearchNode(None, (start_state, None, 0)) #create a initial state searchnode, parent is None, the start is start_state, action none and cost 0
-    fringe.push(start_node) #Push the start node into the stack
+    fringe.push(start_node) #Push the start node into the queue
     visited = set() #graph search, so we need to remember states we've already expanded
     while not fringe.is_empty():#while there are nodes to explore
         node = fringe.pop() #Take next node
@@ -171,7 +171,7 @@ def breadth_first_search(problem):
             return node.get_path()#we return the path, not the state, because we want a list of actions
         for successor, action, cost in problem.get_successors(state): #where the pacman can legally move from the actual state
             successor_node = SearchNode(node,(successor, action, cost)) #create a new searchnode
-            fringe.push(successor_node)#put the successor node into the stack to explore it later
+            fringe.push(successor_node)#put the successor node into the queue to explore it later
     util.raise_not_defined()
 
 def uniform_cost_search(problem):
@@ -180,7 +180,7 @@ def uniform_cost_search(problem):
     fringe = util.PriorityQueue() #places we still need to explore
     start_state = problem.get_start_state() #initial state
     start_node = SearchNode(None, (start_state, None, 0)) #create a initial state searchnode, parent is None, the start is start_state, action none and cost 0
-    fringe.push(start_node, start_node.cost) #Push the start node into the stack
+    fringe.push(start_node, start_node.cost) #Push the start node into the queue with the cost of the start node
     visited = set() #graph search, so we need to remember states we've already expanded
     while not fringe.is_empty():#while there are nodes to explore
         node = fringe.pop() #Take next node
@@ -192,7 +192,7 @@ def uniform_cost_search(problem):
             return node.get_path()#we return the path, not the state, because we want a list of actions
         for successor, action, cost in problem.get_successors(state): #where the pacman can legally move from the actual state
             successor_node = SearchNode(node,(successor, action, cost)) #create a new searchnode
-            fringe.push(successor_node, successor_node.cost)#put the successor node into the stack to explore it later
+            fringe.push(successor_node, successor_node.cost)#put the successor node and its cost into the queue to explore it later
     util.raise_not_defined()
 
 def null_heuristic(state, problem=None):
@@ -205,6 +205,24 @@ def null_heuristic(state, problem=None):
 def a_star_search(problem, heuristic=null_heuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
+    fringe = util.PriorityQueue() #places we still need to explore
+    start_state = problem.get_start_state() #initial state
+    start_node = SearchNode(None, (start_state, None, 0)) #create a initial state searchnode, parent is None, the start is start_state, action none and cost 0
+    cost_startNode = start_node.cost + heuristic(start_state, problem); #we create the total cost for the initial node adding the heuristic function, which requieres the state of the node and the problem itself
+    fringe.push(start_node, cost_startNode) #Push the start node into the queue with the cost of the start node
+    visited = set() #graph search, so we need to remember states we've already expanded
+    while not fringe.is_empty():#while there are nodes to explore
+        node = fringe.pop() #Take next node
+        state = node.state #Take the state from the node
+        if state in visited:
+            continue #ignore node and go back to the beginning of the while loop
+        visited.add(state) #if we haven't seen it add it
+        if problem.is_goal_state(state): #Check if the state is the goal state
+            return node.get_path()#we return the path, not the state, because we want a list of actions
+        for successor, action, cost in problem.get_successors(state): #where the pacman can legally move from the actual state
+            successor_node = SearchNode(node,(successor, action, cost)) #create a new searchnode
+            cost_successorNode = successor_node.cost + heuristic(successor, problem);#we create the total cost for the successor node adding the heuristic function, which requieres the state of the node and the problem itself
+            fringe.push(successor_node, cost_successorNode)#put the successor node and its cost into the queue to explore it later
     util.raise_not_defined()
 
 # Abbreviations
