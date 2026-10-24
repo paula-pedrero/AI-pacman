@@ -532,7 +532,17 @@ def food_heuristic(state, problem):
     """
     position, food_grid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    food_list = food_grid.as_list() #list of all food that Pacman need to eat
+    if food_list == []: #if the list is empty, we have eaten all the food, so we have finished.
+        return 0
+        
+    distances = [] #we create an empty list to save the distances of all the foods with the Pacman
+    for food in food_list: #we iterate through the food
+        distance = maze_distance(position, food, problem.starting_game_state) #to calculate the distance with Pacman taking into account the walls of the maze
+        distances.append(distance) #and append it to the distances list
+    maxDistance = max(distances) #we calculate the max distance, because is the minimun distance that would need to be covered.
+
+    return maxDistance
 
 
 def simplified_corners_heuristic(state, problem):
