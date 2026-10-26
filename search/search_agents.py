@@ -537,9 +537,22 @@ def food_heuristic(state, problem):
         return 0
         
     distances = [] #we create an empty list to save the distances of all the foods with the Pacman
+    
+    if "distances" not in problem.heuristic_info:
+        problem.heuristic_info["distances"] = {} #we create an dictionary to use it as cache memory, to do not re-calculate distances that we have already calculated
+    distances_cache = problem.heuristic_info["distances"]
+
     for food in food_list: #we iterate through the food
-        distance = maze_distance(position, food, problem.starting_game_state) #to calculate the distance with Pacman taking into account the walls of the maze
+        key = (position, food)
+        
+        if key in distances_cache:
+            distance = distances_cache[key]
+        
+        else:
+            distance = maze_distance(position, food, problem.starting_game_state) #to calculate the distance with Pacman taking into account the walls of the maze
+            distances_cache[key] = distance
         distances.append(distance) #and append it to the distances list
+
     maxDistance = max(distances) #we calculate the max distance, because is the minimun distance that would need to be covered.
 
     return maxDistance
