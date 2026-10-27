@@ -534,23 +534,23 @@ def food_heuristic(state, problem):
     "*** YOUR CODE HERE ***"
     food_list = food_grid.as_list() #list of all food that Pacman need to eat
     if food_list == []: #if the list is empty, we have eaten all the food, so we have finished.
-        return 0
+        return 0 #if there is not food left, the remaining cost is 0
         
     distances = [] #we create an empty list to save the distances of all the foods with the Pacman
     
-    if "distances" not in problem.heuristic_info:
-        problem.heuristic_info["distances"] = {} #we create an dictionary to use it as cache memory, to do not re-calculate distances that we have already calculated
-    distances_cache = problem.heuristic_info["distances"]
+    if "distances" not in problem.heuristic_info: #Check if the distance cache already exists 
+        problem.heuristic_info["distances"] = {} #we create an dictionary to use it as cache memory, to avoid re-calculating distances that we have already calculated
+    distances_cache = problem.heuristic_info["distances"] #We get the directory containing the cache distances
 
     for food in food_list: #we iterate through the food
-        key = (position, food)
+        key = (position, food) #create a key with the pacman's position and the food's position
         
-        if key in distances_cache:
-            distance = distances_cache[key]
+        if key in distances_cache:#we check whether this distance has already been calculated
+            distance = distances_cache[key] #reuse that distance if already calculated
         
-        else:
-            distance = maze_distance(position, food, problem.starting_game_state) #to calculate the distance with Pacman taking into account the walls of the maze
-            distances_cache[key] = distance
+        else: #if the distance is not already calculated
+            distance = maze_distance(position, food, problem.starting_game_state) #calculate the distance with Pacman taking into account the walls of the maze
+            distances_cache[key] = distance #store the distance so it can be reused
         distances.append(distance) #and append it to the distances list
 
     maxDistance = max(distances) #we calculate the max distance, because is the minimun distance that would need to be covered.
