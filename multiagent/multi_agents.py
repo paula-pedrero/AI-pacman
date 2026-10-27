@@ -68,13 +68,46 @@ class ReflexAgent(Agent):
         """
         # Useful information you can extract from a GameState (pacman.py)
         successor_game_state = current_game_state.generate_pacman_successor(action)
-        new_pos = successor_game_state.get_pacman_position()
-        new_food = successor_game_state.get_food()
-        new_ghost_states = successor_game_state.get_ghost_states()
-        new_scared_times = [ghostState.scared_timer for ghostState in new_ghost_states]
+        new_pos = successor_game_state.get_pacman_position() #Pacman position after taking the action
+        new_food = successor_game_state.get_food() #food remaining on the board
+        new_ghost_states = successor_game_state.get_ghost_states() #the ghosts positions and states
+        new_scared_times = [ghostState.scared_timer for ghostState in new_ghost_states] #how many moves each ghost remains scared
         
         "*** YOUR CODE HERE ***"
-        return successor_game_state.get_score()
+        if "distances" not in self.__dict__: #check if the distance cache has been created
+            self.distances={} #create an empty dictionary to store calculated distances
+        distances_cache=self.distances #get the dictionary containing the cached distances
+        score= successor_game_state.get_score()
+        food_list=new_food.as_list() #convert food grid to a list of food positions
+        if food_list: #check if there is still food in the board
+            distances=[] #list to store distances from pacman to each food
+            for food in food_list:
+                key=(new_pos, food)
+                if key not in distances_cache:
+                    distances_cache[key]=manhattan_distance(new_pos,food) #calculate the manattan distance and save it in the cache
+                distances.append(distances_cache[key]) #add the cached distance to the list of food distances
+            closest_food = min(distances)#closest food
+            score += 10.0 / (closest_food + 1)#increase score when the closest food is nearby
+        for ghost, scared_time in zip(new_ghost_states, new_scared_times): #evaluate each ghost and its scared time
+            ghost_pos = ghost.get_position() #ghost current position
+            key=(new_pos, ghost_pos)
+            if key not in distances_cache:
+                distances_cache[key]=manhattan_distance(new_pos, ghost_pos)
+            distance= distances_cache[key]
+
+            # If the ghost is scared, encourage Pacman to chase it.
+            if scared_time > 0:
+                score += 20.0 / (distance + 1)
+
+            # If the ghost is dangerous and very close, avoid it.
+            elif distance == 0:
+                score -= 1000
+
+            elif distance < 3:
+                score -= 20.0 / distance
+
+        return score
+        
 
 def score_evaluation_function(current_game_state):
     """
