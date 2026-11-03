@@ -74,38 +74,40 @@ class ReflexAgent(Agent):
         new_scared_times = [ghostState.scared_timer for ghostState in new_ghost_states] #how many moves each ghost remains scared
         
         "*** YOUR CODE HERE ***"
-        if "distances" not in self.__dict__: #check if the distance cache has been created
-            self.distances={} #create an empty dictionary to store calculated distances
-        distances_cache=self.distances #get the dictionary containing the cached distances
-        score= successor_game_state.get_score()
-        food_list=new_food.as_list() #convert food grid to a list of food positions
-        if food_list: #check if there is still food in the board
-            distances=[] #list to store distances from pacman to each food
-            for food in food_list:
-                key=(new_pos, food)
-                if key not in distances_cache:
-                    distances_cache[key]=manhattan_distance(new_pos,food) #calculate the manattan distance and save it in the cache
-                distances.append(distances_cache[key]) #add the cached distance to the list of food distances
-            closest_food = min(distances)#closest food
-            score += 10.0 / (closest_food + 1)#increase score when the closest food is nearby
-        for ghost, scared_time in zip(new_ghost_states, new_scared_times): #evaluate each ghost and its scared time
-            ghost_pos = ghost.get_position() #ghost current position
-            key=(new_pos, ghost_pos)
-            if key not in distances_cache:
-                distances_cache[key]=manhattan_distance(new_pos, ghost_pos)
-            distance= distances_cache[key]
+        # Start with the score of the successor state
+        score = successor_game_state.get_score()
 
-            # If the ghost is scared, encourage Pacman to chase it.
+        # Get the list of remaining food positions
+        food_list = new_food.as_list()
+
+        # Reward Pacman for being close to the nearest food
+        if food_list:
+            distances = [ 
+                manhattan_distance(new_pos, food)
+                for food in food_list
+            ]
+
+        closest_food = min(distances)
+        score += 10.0 / (closest_food + 1)
+
+        # Evaluate the distance to each ghost
+        for ghost, scared_time in zip(new_ghost_states, new_scared_times):
+            ghost_pos = ghost.get_position()
+            distance = manhattan_distance(new_pos, ghost_pos)
+
+            # If the ghost is scared, reward Pacman for approaching it
             if scared_time > 0:
                 score += 20.0 / (distance + 1)
 
-            # If the ghost is dangerous and very close, avoid it.
+            # If the ghost is on Pacman's position, apply a large penalty
             elif distance == 0:
                 score -= 1000
 
+            # If a dangerous ghost is nearby, apply a penalty
             elif distance < 3:
                 score -= 20.0 / distance
 
+    # Return the final evaluation
         return score
         
 
@@ -169,7 +171,86 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        #Recursive function that calculates the minimax value
+        def minimax(state, agent_index, depth):
+            # Stop if the game has ended or we reached depth zero
+            if state.is_win() or state.is_lose() or depth==0:
+                return self.evaluation_function(state)
+
+            # Get all legal actions for the current agent
+            actions=state.get_legal_actions(agent_index)
+
+            # If there are no possible actions, evaluate the state
+            if not actions:
+                return self.evaluation_function(state)
+
+            # Get the total number of agents (Pacman + ghosts)
+            num_agents=state.get_num_agents()
+
+            # Calculate which agent plays next
+            next_agent = (agent_index + 1) % num_agents
+
+            # Keep the same depth for the next agent
+            next_depth=depth
+
+            # If the next agent is Pacman, all ghosts have finished
+            if next_agent==0:
+                next_depth-=1
+            # If it is Pacman's turn, use MAX
+            if agent_index==0:
+                # Start with the lowest possible value
+                best_value = float("-inf")
+                # Explore every possible action
+                for action in actions:
+                    # Generate the state after this action
+                    successor = state.generate_successor(agent_index, action)
+                    # Recursively calculate the value of that state
+                    value = minimax(successor, next_agent, next_depth)
+                    # Keep the highest value
+                    best_value = max(best_value, value)
+                #Return max value
+                return best_value
+            # Otherwise, it is a ghost's turn, so use MIN
+            else:
+                # Start with the highest possible value
+                best_value = float("inf")
+                # Explore every possible action
+                for action in actions:
+                    #Generate the state after thus action
+                    successor = state.generate_successor(agent_index, action)
+                    # Recursively calculate the value of that state
+                    value = minimax(successor, next_agent, next_depth)
+                    # Keep the lowest value
+                    best_value = min(best_value, value)
+                #return the minimum value
+                return best_value
+            # Get all possible actions for Pacman
+        legal_actions = game_state.get_legal_actions(0)
+        # If Pacman has no legal actions, return None
+        if not legal_actions:
+            return None
+        # Start with no selected action
+        best_action = None
+        # Start with the lowest possible value
+        best_value = float("-inf")
+        # Get the total number of agents
+        num_agents = game_state.get_num_agents()
+        # After Pacman moves, the first ghost plays
+        next_agent=1
+        # Start searching with the configured depth
+        next_depth = self.depth
+        # Start searching with the configured depth
+        for action in legal_actions:
+            # Generate the state after Pacman takes this action
+            successor = game_state.generate_successor(0,action)
+            # Calculate the Minimax value of this state
+            value = minimax(successor, next_agent, next_depth)
+            #If this action has a higher value , save it
+            if value > best_value:
+                best_value = value
+                best_action = action
+        return best_action
+                
     
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
