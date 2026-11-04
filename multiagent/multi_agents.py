@@ -263,6 +263,100 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluation_function
         """
         "*** YOUR CODE HERE ***"
+        # Initialize alpha and beta
+        alpha = float("-inf")
+        beta = float("+inf")
+        def alphaBetaPrunning(state, agent_index, depth, alpha, beta):
+            # Stop if the game has ended or we reached depth zero
+            if state.is_win() or state.is_lose() or depth==0:
+                return self.evaluation_function(state)
+
+            # Get all legal actions for the current agent
+            actions=state.get_legal_actions(agent_index)
+
+            # If there are no possible actions, evaluate the state
+            if not actions:
+                return self.evaluation_function(state)
+
+            # Get the total number of agents (Pacman + ghosts)
+            num_agents=state.get_num_agents()
+
+            # Calculate which agent plays next
+            next_agent = (agent_index + 1) % num_agents
+
+            # Keep the same depth for the next agent
+            next_depth=depth
+
+            # If the next agent is Pacman, all ghosts have finished
+            if next_agent==0:
+                next_depth-=1
+            # If it is Pacman's turn, use MAX
+            if agent_index==0:
+                # Start with the lowest possible value
+                best_value = float("-inf")
+                # Explore every possible action
+                for action in actions:
+                    # Generate the state after this action
+                    successor = state.generate_successor(agent_index, action)
+                    # Evaluate the successor recursively
+                    value = alphaBetaPrunning(successor, next_agent, next_depth, alpha, beta)
+                    # Keep the highest value
+                    best_value = max(best_value, value)
+                    #Update alpha value
+                    alpha = max(best_value, alpha)
+                    #Contidion to prune (beta cut)
+                    if alpha>beta:
+                        return best_value
+                #Return max value
+                return best_value
+            # Otherwise, it is a ghost's turn, so use MIN
+            else:
+                # Start with the highest possible value
+                best_value = float("inf")
+                # Explore every possible action
+                for action in actions:
+                    #Generate the state after thus action
+                    successor = state.generate_successor(agent_index, action)
+                    # Evaluate the successor recursively
+                    value = alphaBetaPrunning(successor, next_agent, next_depth, alpha, beta)
+                    # Keep the lowest value
+                    best_value = min(best_value, value)
+                    #Update of beta
+                    beta = min(best_value, beta)
+                    #Condition to prune (alpha cut)
+                    if beta<alpha:
+                        return best_value
+                #return the minimum value
+                return best_value
+                
+        # Get all possible actions for Pacman
+        legal_actions = game_state.get_legal_actions(0)
+        # If Pacman has no legal actions, return None
+        if not legal_actions:
+            return None
+        # Start with no selected action
+        best_action = None
+        # Start with the lowest possible value
+        best_value = float("-inf")
+        # Get the total number of agents
+        num_agents = game_state.get_num_agents()
+        # After Pacman moves, the first ghost plays
+        next_agent=1
+        # Start searching with the configured depth
+        next_depth = self.depth
+        # Start searching with the configured depth
+        for action in legal_actions:
+            # Generate the state after Pacman takes this action
+            successor = game_state.generate_successor(0,action)
+            # Calculate the value using alpha-beta pruning
+            value = alphaBetaPrunning(successor, next_agent, next_depth, alpha, beta)
+            #If this action has a higher value , save it
+            if value > best_value:
+                best_value = value
+                best_action = action
+            #Update alpha value
+            alpha = max(best_value, alpha)
+        return best_action
         util.raise_not_defined()
 
 
