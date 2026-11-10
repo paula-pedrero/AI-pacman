@@ -43,6 +43,9 @@ class QLearningAgent(ReinforcementAgent):
         ReinforcementAgent.__init__(self, **args)
 
         "*** YOUR CODE HERE ***"
+        # Store the Q-values for each state-action pair.
+        # Initially, all Q-values are 0.
+        self.q_values = util.Counter()
 
     def get_q_value(self, state, action):
         """
@@ -51,7 +54,9 @@ class QLearningAgent(ReinforcementAgent):
           or the Q node value otherwise
         """
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        # Return the Q-value associated with this state and action.
+        # If it doesn't exist, Counter returns 0 automatically.
+        return self.q_values[(state, action)]
 
 
     def compute_value_from_q_values(self, state):
@@ -62,7 +67,25 @@ class QLearningAgent(ReinforcementAgent):
           terminal state, you should return a value of 0.0.
         """
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        # Get all legal actions available in this state.
+        legal_actions = self.get_legal_actions(state)
+
+        #If there are no legal actions, return 0
+        if not legal_actions:
+            return 0.0
+
+        #Initialise the best value using first action
+        best_value = self.get_q_value(state, legal_actions[0])
+        #Check the remaining actions
+        for action in legal_actions[1:]:
+            #Get the Q-value of the current action
+            q_value = self.get_q_value(state, action)
+
+            #If this action has a higher value, update best_value
+            if q_value > best_value:
+                best_value = q_value
+        #return the higher Q-value
+        return best_value
 
     def compute_action_from_q_values(self, state):
         """
@@ -71,7 +94,30 @@ class QLearningAgent(ReinforcementAgent):
           you should return None.
         """
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        # Get all legal actions available in this state.
+        legal_actions = self.get_legal_actions(state)
+        #If there are no legal actions, return None
+        if not legal_actions:
+            return None
+
+        #Find the highest Q-value among all actions
+        best_value = self.compute_value_from_q_values(state)
+
+        #Create a list to store all actions with the highest value
+        best_actions = []
+
+        #Check every legal action
+
+        for action in legal_actions:
+            #Get the Q-value of the current action
+            q_value = self.get_q_value(state, action)
+            # If it has the highest value, add it to the list
+            if q_value == best_value:
+                best_actions.append(action)
+        # Randomly choose one of the best actions.
+        return random.choice(best_actions)
+
+
 
     def get_action(self, state):
         """
@@ -88,7 +134,19 @@ class QLearningAgent(ReinforcementAgent):
         legal_actions = self.get_legal_actions(state)
         action = None
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        #If there are no legal actions, return None
+        if not legal_actions:
+            return None
+
+        #Decide whether to explore or exploit
+        if util.flip_coin(self.epsilon):
+            #Exploration: choose a random legal action
+            action = random.choice(legal_actions)
+        else:
+            #exploitation: choose the best known action
+            action = self.compute_action_from_q_values(state)
+        return action
+
         
 
     def update(self, state, action, next_state, reward):
@@ -101,7 +159,17 @@ class QLearningAgent(ReinforcementAgent):
           it will be called on your behalf
         """
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        #Get the current Q-value of the state-action pair
+        current_q_value = self.get_q_value(state, action)
+
+        #Get the maximum Q-value available in the next state
+        next_value = self.compute_value_from_q_values(next_state)
+        #Calculate the new Q-value using the Q-learning formula
+        new_q_value = current_q_value + self.alpha * (reward +self.discount *next_value -current_q_value)
+
+        #Save the updated Q-value
+        self.q_values[(state, action)]= new_q_value
+
 
     def get_policy(self, state):
         return self.compute_action_from_q_values(state)
