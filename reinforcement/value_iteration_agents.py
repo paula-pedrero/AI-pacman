@@ -66,6 +66,30 @@ class ValueIterationAgent(ValueEstimationAgent):
           value iteration, V_k+1(...) depends on V_k(...)'s.
         """
         "*** YOUR CODE HERE ***"
+        for i in range(self.iterations):
+        newValues = util.Counter()
+
+        for state in self.mdp.getStates():
+            if self.mdp.isTerminal(state):
+                continue
+
+            qValues = []
+
+            for action in self.mdp.getPossibleActions(state):
+                qValue = 0
+
+                for nextState, probability in self.mdp.getTransitionStatesAndProbs(state, action):
+                    reward = self.mdp.getReward(state, action, nextState)
+                    qValue += probability * (
+                        reward + self.discount * self.values[nextState]
+                    )
+
+                qValues.append(qValue)
+
+            bestValue = max(qValues)
+            newValues[state] = bestValue
+
+        self.values = newValues
             
     def get_value(self, state):
         """
